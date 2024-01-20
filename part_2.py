@@ -17,8 +17,10 @@ def combustion():
 def assigment():
     sim = Simulation()
     sim.compute()
-    sim.plot_T_f()
-    sim.plot_X_PROD()
+    #sim.plot_T_f_1()
+    #sim.plot_T_f()
+    #sim.compare_T_f()
+    #sim.plot_X_PROD()
     sim.plot_reaction_rate_constant_N1_N2()
 
 if __name__ == '__main__':

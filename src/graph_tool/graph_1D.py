@@ -78,11 +78,25 @@ custom_color = {
         "normal": "#9966ff",
         "light": "#ccb3ff",
     },
+    "chartjs_pink": {
+        "normal": "#ff9f40",
+        "light": "#ffc299",
+    },
     "chartjs_yellow": {
         "normal": "#ffff00",
         "light": "#ffffb3",
     },
 }
+
+def generate_chartjs_colors(n: int) -> list:
+    """
+    Generate n colors for chartjs.
+    """
+    colors = []
+    for i in range(n):
+        
+        colors.append()
+    return colors
 
 class Graph_1D:
     __linestyle = "--"
@@ -90,13 +104,15 @@ class Graph_1D:
     __tick = 10
     
     
-    def __init__(self):
-        self.__fig, __ax = plt.subplots(figsize=(8,6))
+    def __init__(self, fontsize: int = None, figsize: tuple = (9,5)):
+        self.__fig, __ax = plt.subplots(figsize=figsize) #constrained_layout=True)
         self.__axis = [ __ax ]
+        self.__fontsize = fontsize
         plt.rcParams["font.family"] = "serif"
+        if self.__fontsize is not None:
+            plt.rcParams["font.size"] = self.__fontsize
         plt.rcParams["font.serif"] = "Times New Roman"
         plt.rcParams["legend.labelcolor"] = "#363636"
-    
     
     def add_axis(self):
         """
@@ -105,8 +121,13 @@ class Graph_1D:
         ax2 = self.__axis[0].twinx()
         self.__axis.append(ax2)
     
+    def set_y_axis_log(self, axis_number: int = 0) -> None:
+        """
+        Set the y axis of the graph to log scale.
+        """
+        self.__axis[axis_number].set_yscale('log')
     
-    def setup_axis(self, xlabel: str, ylabel: str, xmin: float, xmax: float, ymin: float, ymax: float, axis_number: int = 0, sci: bool = True, tick: int = __tick, color: str = None) -> None:
+    def setup_axis(self, xlabel: str, ylabel: str, xmin: float = None, xmax: float = None, ymin: float = None, ymax: float = None, axis_number: int = 0, sci: bool = True, tick: int = __tick, color: str = None, log_scale_y: bool = False) -> None:
         """
         Setup the axis of the graph.
         """
@@ -117,27 +138,35 @@ class Graph_1D:
         axis.spines['right'].set_color('#e1e1e1')
         axis.set_xlabel(xlabel, fontname="Times New Roman", color="#363636")
         axis.set_ylabel(ylabel, fontname="Times New Roman", color="#363636")
+        if self.__fontsize is not None:
+            axis.set_xlabel(xlabel, fontname="Times New Roman", color="#363636", size=self.__fontsize)
+            axis.set_ylabel(ylabel, fontname="Times New Roman", color="#363636", size=self.__fontsize)
         if sci:
-            axis.ticklabel_format(style='sci', axis='x', scilimits=(0,0), useMathText=True)
-            axis.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useMathText=True)
+            axis.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useMathText=True, useOffset=False)
+            axis.ticklabel_format(style='sci', axis='x', scilimits=(0,0), useMathText=True, useOffset=False)
             for offset in axis.get_yaxis().get_offset_text(), axis.get_xaxis().get_offset_text():
                 offset.set_fontname("Times New Roman")
                 offset.set_color("#363636")
-        else:
-            axis.ticklabel_format(style='plain', axis='x', scilimits=(0,0), useMathText=True)
-            axis.ticklabel_format(style='plain', axis='y', scilimits=(0,0), useMathText=True)
-        axis.set_xlim([xmin, xmax])
-        axis.set_ylim([ymin, ymax])
-        axis.set_xticks(np.arange(xmin, xmax, (xmax - xmin) / tick))
-        axis.set_yticks(np.arange(ymin, ymax, (ymax - ymin) / tick))
+        if ymin is not None and ymax is not None:
+            axis.set_ylim([ymin, ymax])
+            #axis.set_yticks(np.arange(ymin, ymax, (ymax - ymin) / tick))
+        if xmin is not None and xmax is not None:
+            axis.set_xlim([xmin, xmax])
+            #axis.set_xticks(np.arange(xmin, xmax, (xmax - xmin) / tick))
         for tick_label in axis.get_xticklabels() + axis.get_yticklabels():
             tick_label.set_fontname("Times New Roman")
             tick_label.set_color("#363636")
+            if self.__fontsize is not None:
+                tick_label.set_fontsize(self.__fontsize)
+        
+        if log_scale_y:
+            axis.set_yscale('log')
+            
         axis.axhline(y=0, color='#e1e1e1', linestyle='-', linewidth=1)
         if color:
             axis.tick_params(axis='y', colors=custom_color[color]["normal"])
     
-    def setup_secondary_axis(self, ylabel: str, ymin: float, ymax: float, axis_number: int = 1, sci: bool = True, tick: int = __tick, color: str = None) -> None:
+    def setup_secondary_axis(self, ylabel: str, ymin: float = None, ymax: float = None, axis_number: int = 1, sci: bool = True, tick: int = __tick, color: str = None, log_scale_y: bool = False) -> None:
         """
         Setup the axis of the graph.
         """
@@ -154,14 +183,35 @@ class Graph_1D:
             offset.set_color("#363636")
         else:
             axis.ticklabel_format(style='plain', axis='y', scilimits=(0,0), useMathText=True)
-        axis.set_ylim([ymin, ymax])
-        axis.set_yticks(np.arange(ymin, ymax, (ymax - ymin) / tick))
+        
+        if ymin is not None and ymax is not None:
+            axis.set_ylim([ymin, ymax])
+            axis.set_yticks(np.arange(ymin, ymax, (ymax - ymin) / tick))
         for tick_label in axis.get_yticklabels():
             tick_label.set_fontname("Times New Roman")
             tick_label.set_color("#363636")
+    
+        if log_scale_y:
+            axis.set_yscale('log')
+            
         axis.axhline(y=0, color='#e1e1e1', linestyle='-', linewidth=1)
         if color:
             axis.tick_params(axis='y', colors=custom_color[color]["normal"])
+    
+    def secondary_xaxis(self, functions, xlabel: str) -> None:
+        """
+        Add a secondary x axis to the graph.
+        """
+        secax = self.__axis[0].secondary_xaxis('top', functions=functions)
+        secax.set_xlabel(xlabel, fontname="Times New Roman", color="#363636")
+
+        secax.spines['top'].set_color('#e1e1e1')
+        secax.spines['bottom'].set_color('#e1e1e1')
+        secax.spines['left'].set_color('#e1e1e1')
+        secax.spines['right'].set_color('#e1e1e1')
+        for tick_label in secax.get_xticklabels():
+            tick_label.set_fontname("Times New Roman")
+            tick_label.set_color("#363636")
     
     def plot(self, x: list, y: list, label: str = None, color: str = None, axis_number: int = 0, linestyle: str = __linestyle, marker: str = __marker) -> None:
         """
@@ -358,11 +408,28 @@ class Graph_1D:
             # fill the area between curve1 and curve2
             axis.fill_between(curve1[0], curve1[1], curve2[1], color=custom_color[color]["light"], alpha=alpha, label=label)
     
-    def save(self, filename: str) -> None:
+    def save(self, filename: str, loc: str = 'upper left', dx: float = 0.3, dy: float = 1.14, ncol: int = 2) -> None:
         """
         Save the graph.
         """
-        plt.savefig(filename, bbox_inches='tight')
+        locs = ['upper left', 'upper right']
+        for i, axis in enumerate(self.__axis):
+            if i == 0:
+                j = locs.index(loc)
+                axis.legend(bbox_to_anchor=(dx, dy), loc=locs[j], ncol=ncol, frameon=False)
+            else:
+                j = locs.index(loc)
+                j_other = locs.index(loc) - 1
+                j_other = (j_other + 1) % 2
+                axis.legend(bbox_to_anchor=(dx, dy-0.05), loc=locs[j_other], ncol=ncol, frameon=False)
+
+        for axis in self.__axis:
+            axis.grid(True, axis='y', linestyle='-', linewidth=0.5, color='#e1e1e1')
+            #axis.axhline(y=0, color='#e1e1e1', linestyle='-', linewidth=1)
+
+        self.__axis[0].grid(True, axis='x', linestyle='-', linewidth=0.5, color='#e1e1e1')
+
+        plt.savefig(filename, bbox_inches='tight', dpi=300)
     
     def delete(self) -> None:
         """
